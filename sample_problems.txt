@@ -1,0 +1,191 @@
+# Sample Integration Problems
+#
+# Twenty integrals to paste into the Integration Calculator (CLI or web UI),
+# ranging from routine to intentionally nasty "integral bee" style trick
+# questions. For each one:
+#   - "Paste into f(x):"  is exactly what to type into the function field.
+#   - "Bounds:"           is what to type into the lower/upper bound fields
+#                          (omit for an indefinite integral).
+#   - A note, where one is given, explains anything non-obvious about how
+#     the original notation was translated into calculator syntax.
+#
+# Syntax notes for the calculator's parser (SymPy under the hood):
+#   ^        -> use ** for exponents, or ^ also works (auto-converted)
+#   |x|      -> not supported directly; use Abs(x) instead
+#   arctan   -> use atan(x)
+#   ln / log -> use log(x) (natural log by default)
+#   floor(x), ceiling(x), frac(x)  -> all supported directly
+#   Max(x, y) -> capital M (lowercase max is a different, unrelated thing)
+#   infinity -> use oo (e.g. bounds "-oo" to "oo")
+#
+# What to expect (all 20 were run through the real calculator):
+#   - Every problem returns a result or a clear message; none crash it.
+#   - Each calculation is stopped after 10 seconds. #16 hits that limit (its
+#     symbolic integration runs effectively forever), and the calculator
+#     says so instead of freezing. #1 takes about 6 seconds just for the
+#     answer, and the step-by-step explanation for #1 and #19 is skipped
+#     because it takes too long; the answer itself still appears.
+#   - Answers I checked independently are listed under "Checked answer"
+#     below, so you can see the calculator agrees with a second method.
+#   - For integrands with jumps or kinks (#3, #4, #11, #15) the numerical
+#     methods table may say "irregular": the error does not follow a clean
+#     power law, which is expected, and the calculator says so honestly.
+#   - Infinite bounds (#17) get a numerical answer, but the Riemann,
+#     trapezoid and Simpson comparison is skipped (it needs a finite interval).
+
+============================================================
+1. Integral from -pi to pi of sin^2025(x) * cos^2026(x) dx
+============================================================
+Paste into f(x):  sin(x)**2025 * cos(x)**2026
+Bounds:            -pi  to  pi
+Checked answer: 0 (odd integrand over a symmetric interval). The calculator
+finds it exactly, in about 6 seconds; its step-by-step output times out.
+
+============================================================
+2. Integral of e^(2026*e^x + x) dx
+============================================================
+Paste into f(x):  exp(2026*exp(x) + x)
+Bounds:            (none — indefinite)
+
+============================================================
+3. Integral from 0 to 2026 of frac(floor(x)/3) dx
+============================================================
+Paste into f(x):  frac(floor(x)/3)
+Bounds:            0  to  2026
+Note: frac(y) is the fractional part of y, {y} in the original notation.
+Checked answer: 675 (summing the unit pieces by brute force gives the same).
+SymPy has no closed form here, so the value comes from numerical quadrature
+split at the integers, where floor() jumps.
+
+============================================================
+4. Integral from -1 to 1 of |x + |x + ... + |x + |x||...|| dx  (2026 x's)
+============================================================
+Paste into f(x):  Abs(x + Abs(x + Abs(x + Abs(x))))
+Bounds:            -1  to  1
+Note: the real problem nests 2026 times, which is impractical to type or
+paste as one literal string. This is a 4-fold stand-in so you can confirm
+the calculator handles nested Abs() correctly; the actual competition
+answer relies on a telescoping pattern in n rather than brute-force
+computation for large n.
+
+============================================================
+5. Integral of dx / (sqrt(x+1) - sqrt(x-1))
+============================================================
+Paste into f(x):  1/(sqrt(x+1) - sqrt(x-1))
+Bounds:            (none — indefinite)
+
+============================================================
+6. Integral of sqrt(1 + cosh(x)) dx
+============================================================
+Paste into f(x):  sqrt(1+cosh(x))
+Bounds:            (none — indefinite)
+Note: SymPy leaves this as an unevaluated Integral (no elementary closed
+form found) — a good example of the "honest no closed form" message.
+
+============================================================
+7. Integral of 2^log(x) / x^2 dx
+============================================================
+Paste into f(x):  2**log(x)/x**2
+Bounds:            (none — indefinite)
+
+============================================================
+8. Integral from 0 to 1/2 of (sum from n=2 to infinity of x^n) dx
+============================================================
+Paste into f(x):  x**2/(1-x)
+Bounds:            0  to  1/2
+Note: the calculator can't take an infinite sum as input directly, so
+this pastes the closed form of the series itself — sum_{n=2}^inf x^n
+equals x^2/(1-x) for |x| < 1, which is the same function being integrated.
+
+============================================================
+9. Integral of x^2 * sin(x) dx
+============================================================
+Paste into f(x):  x**2*sin(x)
+Bounds:            (none — indefinite)
+
+============================================================
+10. Integral of (x-1)^2 / (2e^x + x^2 + 1) dx
+============================================================
+Paste into f(x):  (x-1)**2/(2*exp(x)+x**2+1)
+Bounds:            (none — indefinite)
+
+============================================================
+11. Integral from -1 to 1 of max(0, sqrt(1-x^2) - 1/2) dx
+============================================================
+Paste into f(x):  Max(0, sqrt(1-x**2) - 1/2)
+Bounds:            -1  to  1
+
+============================================================
+12. Integral from 0 to 1 of sqrt(x^2 + x + sqrt(x^2 + x + sqrt(...))) dx
+============================================================
+Paste into f(x):  x+1
+Bounds:            0  to  1
+Note: this infinite nested radical has a closed form. If L is the whole
+expression, L = sqrt(x^2 + x + L), so L^2 - L - (x^2+x) = 0, giving
+L = (1 + sqrt(4x^2+4x+1))/2 = (1 + |2x+1|)/2, which simplifies to x+1
+for x in [0, 1] (where 2x+1 is always positive).
+
+============================================================
+13. Integral of (cos^5(x) - 10cos^3(x)sin^2(x) + 5cos(x)sin^4(x)) dx
+============================================================
+Paste into f(x):  cos(x)**5 - 10*cos(x)**3*sin(x)**2 + 5*cos(x)*sin(x)**4
+Bounds:            (none — indefinite)
+Note: this is cos(5x) in disguise (a Chebyshev/multiple-angle identity) —
+worth checking whether the step-by-step output notices, or just grinds
+through it term by term.
+
+============================================================
+14. Integral of arctan(sqrt(x)) dx
+============================================================
+Paste into f(x):  atan(sqrt(x))
+Bounds:            (none — indefinite)
+
+============================================================
+15. Integral from 0 to 1000 of (floor(x) + ceiling(floor(x)) + floor(frac(x))
+    + frac(floor(x)) + ceiling(frac(x)) + frac(ceiling(x))) dx
+============================================================
+Paste into f(x):  floor(x) + ceiling(floor(x)) + floor(frac(x)) + frac(floor(x)) + ceiling(frac(x)) + frac(ceiling(x))
+Bounds:            0  to  1000
+
+============================================================
+16. Integral of sqrt((cos(x)cot(x)csc(x)) / (sin(x)tan(x)sec(x))) dx
+============================================================
+Paste into f(x):  sqrt((cos(x)*cot(x)*csc(x))/(sin(x)*tan(x)*sec(x)))
+Bounds:            (none — indefinite)
+Note: SymPy's integrate() runs effectively forever on this one. The
+calculator stops it after 10 seconds and shows a "took longer than 10
+seconds" message, in both the CLI and the web UI, so it is safe to try.
+Checked answer: the ratio simplifies to cot(x)^4 under the square root, so
+the integrand is cot(x)^2 and the integral is -x - cot(x) + C. You can
+confirm by typing cot(x)**2 into the calculator, which answers instantly and
+verifies the result by differentiating it.
+
+============================================================
+17. Integral from -infinity to infinity of e^(-x^2) / (1 + e^(2x)) dx
+============================================================
+Paste into f(x):  exp(-x**2)/(1+exp(2*x))
+Bounds:            -oo  to  oo
+Checked answer: sqrt(pi)/2 ≈ 0.886227, which follows from the symmetry
+trick f(x) + f(-x) = e^(-x^2). SymPy finds no closed form, so the calculator
+uses numerical quadrature (which handles infinite limits) and reports
+0.886227. The numerical-methods comparison is skipped for infinite bounds.
+
+============================================================
+18. Integral of (sin^2(x)/x^2 - sin(2x)/x) dx
+============================================================
+Paste into f(x):  sin(x)**2/x**2 - sin(2*x)/x
+Bounds:            (none — indefinite)
+
+============================================================
+19. Integral of (log(log(x)) * log(log(log(x)))) / (x * log(x)) dx
+============================================================
+Paste into f(x):  log(log(x))*log(log(log(x)))/(x*log(x))
+Bounds:            (none — indefinite)
+
+============================================================
+20. Integral from 0 to pi/2 of cos^2( (pi/2) * cos^2( (pi/2) * cos^2(x) ) ) dx
+============================================================
+Paste into f(x):  cos((pi/2)*cos((pi/2)*cos(x)**2)**2)**2
+Bounds:            0  to  pi/2
+Checked answer: pi/4 ≈ 0.785398 (matches SciPy's quad to 15 digits). No
+closed form from SymPy; the value comes from numerical quadrature.

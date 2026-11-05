@@ -1,0 +1,22 @@
+# Python bytecode and caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets and local configuration (never commit these)
+.env
+
+# Files the program generates when you ask it to save plots.
+# (Named individually on purpose: a blanket *.png rule would also hide
+# screenshots you want to keep, for example in docs/.)
+integral_plot.png
+method_comparison.png
+convergence_plot.png
+
+# macOS
+.DS_Store
+.ruff_cache/

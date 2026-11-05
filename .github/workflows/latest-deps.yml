@@ -1,0 +1,35 @@
+name: Latest dependencies
+
+# The main workflow tests against the pinned versions in requirements.txt, which
+# keeps it reproducible. This one runs weekly against the newest release of every
+# dependency, so a breaking change upstream shows up as an early warning instead
+# of a surprise. (Scheduled workflows run on the default branch only.)
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays, 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest:
+    name: Tests with the newest dependency versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install the newest versions (ignoring the pins)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install sympy mpmath matplotlib numpy flask pytest
+          python -m pip list
+
+      - name: Run the test suite
+        run: python -m pytest test_project.py -ra --durations=10

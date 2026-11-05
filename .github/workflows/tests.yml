@@ -1,0 +1,109 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch or pull request cancels the run still in progress.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13" # the version the pinned requirements were tested on
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install ruff
+        run: python -m pip install ruff==0.16.9
+      - name: Check code
+        run: ruff check .
+
+  test:
+    name: Tests (${{ matrix.os }})
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    # Windows is informational for now: its process isolation uses the "spawn"
+    # start method, which has not been verified. A failure there is shown as a
+    # warning but does not fail the workflow.
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            experimental: false
+          - os: macos-latest
+            experimental: false
+          - os: windows-latest
+            experimental: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install dependencies (pinned versions)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run the test suite
+        run: python -m pytest test_project.py -ra --durations=10
+
+      - name: Smoke test the command-line program
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          printf 'x**2\n\n0,3\nn\nn\nn\nquit\n' | python project.py | tee cli_output.txt
+          grep -F "= 9" cli_output.txt
+          grep -F "Verified" cli_output.txt
+
+      - name: Smoke test the web app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python app.py > server.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid' EXIT
+
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:5000/ > /dev/null && break
+            sleep 1
+          done
+
+          curl -sf http://127.0.0.1:5000/ \
+            --data-urlencode "expression=x*exp(x)" --data-urlencode "variable=x" \
+            --data-urlencode "lower=0" --data-urlencode "upper=1" \
+            --data-urlencode "show_steps=on" -o page.html
+          grep -q "Verified" page.html
+          grep -q "Integration by parts" page.html
+
+          # Code injection must be refused with a message, not executed.
+          curl -sf http://127.0.0.1:5000/ \
+            --data-urlencode "expression=__import__('os').system('id')" --data-urlencode "variable=x" \
+            -o hostile.html
+          grep -q "not allowed" hostile.html
+          ! grep -q "uid=" hostile.html
+
+      - name: Show server log if the web smoke test failed
+        if: failure() && runner.os == 'Linux'
+        shell: bash
+        run: cat server.log || true
