@@ -1,9 +1,18 @@
 name: Tests
 
+# This repository holds several projects. The code lives in integration_calculator/,
+# while GitHub only reads workflows from the .github/ folder at the repository root,
+# so every step below runs inside that subfolder.
 on:
   push:
     branches: [main, master]
+    paths:
+      - "integration_calculator/**"
+      - ".github/workflows/tests.yml"
   pull_request:
+    paths:
+      - "integration_calculator/**"
+      - ".github/workflows/tests.yml"
   workflow_dispatch:
 
 # A newer push to the same branch or pull request cancels the run still in progress.
@@ -13,6 +22,10 @@ concurrency:
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    working-directory: integration_calculator
 
 env:
   PYTHON_VERSION: "3.13" # the version the pinned requirements were tested on
@@ -58,7 +71,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: requirements*.txt
+          cache-dependency-path: integration_calculator/requirements*.txt
 
       - name: Install dependencies (pinned versions)
         run: |

@@ -13,6 +13,11 @@ on:
 permissions:
   contents: read
 
+# The code lives in the integration_calculator/ subfolder of the repository.
+defaults:
+  run:
+    working-directory: integration_calculator
+
 jobs:
   latest:
     name: Tests with the newest dependency versions
