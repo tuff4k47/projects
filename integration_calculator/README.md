@@ -144,7 +144,7 @@ can save the plots as PNG files.
 - `.gitignore`: keeps caches, virtual environments, `.env` and generated plots out of git.
 - `LICENSE`: MIT license.
 - `docs/`: the screenshots used in this README.
-- `.github/workflows/`: continuous integration (see Tests below).
+- `.github/workflows/`: continuous integration (see Tests below). In the GitHub repository these live at the repository root, one level above this folder, because GitHub only reads workflows from there.
 
 ## How to run it
 
